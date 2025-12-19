@@ -2,6 +2,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from fredapi import Fred
 import os
+import plotly.utils
 
 # FRED API key
 fred = Fred(api_key=os.environ.get('FRED_API_KEY'))
