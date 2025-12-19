@@ -2,6 +2,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from fredapi import Fred
 import os
+import json
 
 # FRED API key
 fred = Fred(api_key=os.environ.get('FRED_API_KEY'))
@@ -13,30 +14,14 @@ sp500_df.index.name = 'Date'
 sp500_df.reset_index(inplace=True)
 
 # Convert dates to strings for JSON
-sp500_df['Date'] = sp500_df['Date'].astype(str)
+sp500_df['Date'] = sp500_df['Date'].dt.strftime('%Y-%m-%d')
 
-# Create Plotly figure
-fig = go.Figure()
-fig.add_trace(go.Scatter(
-    x=sp500_df['Date'],
-    y=sp500_df['SP500'],
-    mode='lines',
-    name='S&P 500',
-    line=dict(color='#1f77b4', width=2)
-))
-
-fig.update_layout(
-    title='S&P 500 Index',
-    xaxis_title='Date',
-    yaxis_title='Index Value',
-    hovermode='x unified',
-    template='plotly_white',
-    height=600
-)
+# Prepare data for JavaScript
+dates_json = json.dumps(sp500_df['Date'].tolist())
+values_json = json.dumps(sp500_df['SP500'].tolist())
 
 # Create HTML with dark mode toggle
-html_template = """
-<!DOCTYPE html>
+html_template = """<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -167,6 +152,6 @@ html_template = """
 # Write HTML file with data
 with open('index.html', 'w') as f:
     f.write(html_template.format(
-        dates=sp500_df['Date'].tolist(),
-        values=sp500_df['SP500'].tolist()
+        dates=dates_json,
+        values=values_json
     ))
