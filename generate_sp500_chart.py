@@ -2,7 +2,6 @@ import pandas as pd
 import plotly.graph_objects as go
 from fredapi import Fred
 import os
-import plotly.utils
 
 # FRED API key
 fred = Fred(api_key=os.environ.get('FRED_API_KEY'))
@@ -13,7 +12,10 @@ sp500_df = sp500.to_frame(name='SP500')
 sp500_df.index.name = 'Date'
 sp500_df.reset_index(inplace=True)
 
-# Create Plotly figure with light mode
+# Convert dates to strings for JSON
+sp500_df['Date'] = sp500_df['Date'].astype(str)
+
+# Create Plotly figure
 fig = go.Figure()
 fig.add_trace(go.Scatter(
     x=sp500_df['Date'],
@@ -91,6 +93,9 @@ html_template = """
     <div id="chart"></div>
     
     <script>
+        var dates = {dates};
+        var values = {values};
+        
         var lightLayout = {{
             title: 'S&P 500 Index',
             xaxis: {{title: 'Date'}},
@@ -115,7 +120,13 @@ html_template = """
             font: {{color: '#ffffff'}}
         }};
         
-        var data = {data};
+        var data = [{{
+            x: dates,
+            y: values,
+            mode: 'lines',
+            name: 'S&P 500',
+            line: {{color: '#1f77b4', width: 2}}
+        }}];
         
         var currentTheme = 'light';
         
@@ -153,10 +164,9 @@ html_template = """
 </html>
 """
 
-# Convert figure data to JSON
-import json
-data_json = json.dumps(fig.data, cls=plotly.utils.PlotlyJSONEncoder)
-
-# Write HTML file
+# Write HTML file with data
 with open('index.html', 'w') as f:
-    f.write(html_template.format(data=data_json))
+    f.write(html_template.format(
+        dates=sp500_df['Date'].tolist(),
+        values=sp500_df['SP500'].tolist()
+    ))
